@@ -85,6 +85,25 @@ export const deleteTask = createAsyncThunk(
   }
 )
 
+// Toggle star task
+export const toggleStar = createAsyncThunk(
+  'tasks/toggleStar',
+  async (id, thunkAPI) => {
+    try {
+      const token = thunkAPI.getState().auth.user.token
+      return await taskService.toggleStar(id, token)
+    } catch (error) {
+      const message =
+        (error.response &&
+          error.response.data &&
+          error.response.data.message) ||
+        error.message ||
+        error.toString()
+      return thunkAPI.rejectWithValue(message)
+    }
+  }
+)
+
 export const taskSlice = createSlice({
   name: 'task',
   initialState,
@@ -145,6 +164,21 @@ export const taskSlice = createSlice({
         )
       })
       .addCase(deleteTask.rejected, (state, action) => {
+        state.isLoading = false
+        state.isError = true
+        state.message = action.payload
+      })
+      .addCase(toggleStar.pending, (state) => {
+        state.isLoading = true
+      })
+      .addCase(toggleStar.fulfilled, (state, action) => {
+        state.isLoading = false
+        state.isSuccess = true
+        state.tasks = state.tasks.map((task) =>
+          task._id === action.payload._id ? action.payload : task
+        )
+      })
+      .addCase(toggleStar.rejected, (state, action) => {
         state.isLoading = false
         state.isError = true
         state.message = action.payload

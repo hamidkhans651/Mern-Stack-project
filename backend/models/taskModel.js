@@ -24,6 +24,10 @@ const taskSchema = mongoose.Schema(
       enum: ['pending', 'in-progress', 'completed'],
       default: 'pending',
     },
+    starred: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

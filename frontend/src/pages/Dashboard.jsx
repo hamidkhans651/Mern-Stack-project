@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import { FaPlus, FaChevronLeft, FaChevronRight } from 'react-icons/fa'
 import TaskItem from '../components/TaskItem'
 import TaskFormPopup from '../components/TaskFormPopup'
+import SearchAndFilters from '../components/SearchAndFilters'
 import Spinner from '../components/Spinner'
 import { getTasks, reset } from '../features/tasks/taskSlice'
 
@@ -14,10 +15,45 @@ function Dashboard() {
   const [currentPage, setCurrentPage] = useState(1)
   const tasksPerPage = 6
 
+  // Filter and search state
+  const [searchTerm, setSearchTerm] = useState('')
+  const [filterStatus, setFilterStatus] = useState('all')
+  const [showStarredOnly, setShowStarredOnly] = useState(false)
+
   const { user } = useSelector((state) => state.auth)
   const { tasks, isLoading, isError, message } = useSelector(
     (state) => state.tasks
   )
+
+  // Filtered tasks
+  const filteredTasks = useMemo(() => {
+    return tasks.filter((task) => {
+      // Search filter
+      const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase())
+      
+      // Status filter
+      const matchesStatus = filterStatus === 'all' || task.status === filterStatus
+      
+      return matchesSearch && matchesStatus
+    })
+  }, [tasks, searchTerm, filterStatus])
+
+  const handleSearch = (value) => {
+    console.log('Search called with:', value)
+    setSearchTerm(value)
+    setCurrentPage(1) // Reset to first page when searching
+  }
+
+  const handleFilter = (status, starred = showStarredOnly) => {
+    console.log('Filter called with:', status, starred)
+    if (typeof status === 'string') {
+      setFilterStatus(status)
+    }
+    if (typeof starred === 'boolean') {
+      setShowStarredOnly(starred)
+    }
+    setCurrentPage(1) // Reset to first page when filtering
+  }
 
   useEffect(() => {
     if (isError) {
@@ -35,16 +71,16 @@ function Dashboard() {
     }
   }, [user, navigate, isError, message, dispatch])
 
-  // Calculate pagination
+  // Calculate pagination for filtered tasks
   const indexOfLastTask = currentPage * tasksPerPage
   const indexOfFirstTask = indexOfLastTask - tasksPerPage
-  const currentTasks = tasks.slice(indexOfFirstTask, indexOfLastTask)
-  const totalPages = Math.ceil(tasks.length / tasksPerPage)
+  const currentTasks = filteredTasks.slice(indexOfFirstTask, indexOfLastTask)
+  const totalPages = Math.ceil(filteredTasks.length / tasksPerPage)
 
-  // Reset to first page when tasks change
+  // Reset to first page when filtered tasks change
   useEffect(() => {
     setCurrentPage(1)
-  }, [tasks.length])
+  }, [filteredTasks.length])
 
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber)
@@ -103,7 +139,15 @@ function Dashboard() {
           </button>
         </div>
 
-        {tasks.length > 0 ? (
+        {/* Search and Filters */}
+        <SearchAndFilters
+          onSearch={handleSearch}
+          onFilter={handleFilter}
+          searchTerm={searchTerm}
+          filterStatus={filterStatus}
+        />
+
+        {filteredTasks.length > 0 ? (
           <>
             <div className='tasks'>
               {currentTasks.map((task) => (
@@ -133,11 +177,16 @@ function Dashboard() {
 
                 <span className='pagination-info'>
                   Page {currentPage} of {totalPages} 
-                  ({tasks.length} total tasks)
+                  ({filteredTasks.length} filtered tasks of {tasks.length} total)
                 </span>
               </div>
             )}
           </>
+        ) : tasks.length > 0 ? (
+          <div className='no-tasks'>
+            <h3>No tasks match your current filters</h3>
+            <p>Try adjusting your search or filter criteria.</p>
+          </div>
         ) : (
           <div className='no-tasks'>
             <h3>You have not created any tasks yet</h3>

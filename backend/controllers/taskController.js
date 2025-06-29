@@ -90,9 +90,42 @@ const deleteTask = asyncHandler(async (req, res) => {
   res.status(200).json({ id: req.params.id })
 })
 
+// @desc    Toggle star task
+// @route   PATCH /api/tasks/:id/star
+// @access  Private
+const toggleStar = asyncHandler(async (req, res) => {
+  const task = await Task.findById(req.params.id)
+
+  if (!task) {
+    res.status(400)
+    throw new Error('Task not found')
+  }
+
+  // Check for user
+  if (!req.user) {
+    res.status(401)
+    throw new Error('User not found')
+  }
+
+  // Make sure the logged in user matches the task user
+  if (task.user.toString() !== req.user.id) {
+    res.status(401)
+    throw new Error('User not authorized')
+  }
+
+  const updatedTask = await Task.findByIdAndUpdate(
+    req.params.id,
+    { starred: !task.starred },
+    { new: true }
+  )
+
+  res.status(200).json(updatedTask)
+})
+
 module.exports = {
   getTasks,
   setTask,
   updateTask,
   deleteTask,
+  toggleStar,
 } 
