@@ -1,6 +1,7 @@
 import axios from 'axios'
+import config from '../../config/config'
 
-const API_URL = '/api/tasks/'
+const API_URL = `${config.API_URL}/api/tasks/`
 
 // Create new task
 const createTask = async (taskData, token) => {
