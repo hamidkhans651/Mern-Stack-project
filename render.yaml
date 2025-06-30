@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: mern-backend  # Your service name
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: MONGO_URI
+        value: mongodb+srv://muhammadhamidjj7:Vezx2kYpAa9nYFrz@cluster0.p8iermg.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
+      - key: JWT_SECRET
+        value: 65mZneZNGFZwc97CN6yDXune/8InHD5V42RK2ppD93I=
